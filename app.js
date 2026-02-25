@@ -1,221 +1,314 @@
-// ---- Data ----
-let players = JSON.parse(localStorage.getItem('players')) || [];
-let tournament = null;
+let players = JSON.parse(localStorage.getItem("players")) || [];
+let tournaments = JSON.parse(localStorage.getItem("tournaments")) || {
+  u9: null,
+  u11: null,
+  u13: null
+};
 
-// ---- DOM Elements ----
-const playersList = document.getElementById('players-list');
-const activePlayersList = document.getElementById('active-players');
-const pairingsList = document.getElementById('pairings');
-const addPlayerBtn = document.getElementById('add-player');
-const startTournamentBtn = document.getElementById('start-tournament');
-const ageFilterContainer = document.getElementById('age-filter-container');
-const standingsTable = document.querySelector('#standings tbody');
-const printBtn = document.getElementById('print-pairings');
-const nextRoundBtn = document.getElementById('next-round');
+const K = 20;
 
-// ---- Age Filter ----
-const ageFilterSelect = document.createElement('select');
-ageFilterSelect.innerHTML = `
-  <option value="">All Ages</option>
-  <option value="U9">U9</option>
-  <option value="U11">U11</option>
-  <option value="U13">U13</option>
-`;
-ageFilterContainer.appendChild(ageFilterSelect);
+function save() {
+  localStorage.setItem("players", JSON.stringify(players));
+  localStorage.setItem("tournaments", JSON.stringify(tournaments));
+}
 
-// ---- Functions ----
-function renderPlayers() {
-  playersList.innerHTML = '';
-  players.forEach((p) => {
-    const li = document.createElement('li');
-    li.textContent = `${p.name} (${p.ageGroup}) - ${p.rating} Elo`;
-    playersList.appendChild(li);
+/* ======================
+   PLAYER MANAGEMENT
+====================== */
+
+document.getElementById("add-player").onclick = () => {
+  const name = document.getElementById("player-name").value.trim();
+  const age = document.getElementById("age-group").value;
+
+  if (!name) return;
+
+  players.push({
+    id: Date.now(),
+    name,
+    age,
+    rating: 1200
   });
-  localStorage.setItem('players', JSON.stringify(players));
-}
 
-// Add new player
-addPlayerBtn.addEventListener('click', () => {
-  const name = document.getElementById('new-player-name').value.trim();
-  const rating = parseInt(document.getElementById('new-player-rating').value) || 1200;
-  const ageGroup = document.getElementById('new-player-age').value;
+  document.getElementById("player-name").value = "";
+  save();
+  alert("Player added.");
+};
 
-  if (!["U9","U11","U13"].includes(ageGroup)) {
-    alert("Age group must be U9, U11, or U13");
+document.getElementById("clear-players").onclick = () => {
+  if (confirm("Clear all players and tournaments?")) {
+    players = [];
+    tournaments = { u9: null, u11: null, u13: null };
+    save();
+    location.reload();
+  }
+};
+
+/* ======================
+   START DIVISION
+====================== */
+
+document.getElementById("start-division").onclick = () => {
+  const div = document.getElementById("division-select").value;
+
+  const divisionPlayers = players
+    .filter(p => p.age === div)
+    .map(p => ({
+      ...p,
+      points: 0,
+      opponents: []
+    }));
+
+  if (divisionPlayers.length < 2) {
+    alert("Need at least 2 players");
     return;
   }
 
-  if (name) {
-    players.push({ id: Date.now(), name, rating, ageGroup, active: true, points: 0 });
-    renderPlayers();
-    document.getElementById('new-player-name').value = '';
-  }
-});
-
-// Elo Calculation
-function updateElo(playerA, playerB, scoreA, K = 32) {
-  const expectedA = 1 / (1 + Math.pow(10, (playerB.rating - playerA.rating)/400));
-  const expectedB = 1 - expectedA;
-  playerA.rating = Math.round(playerA.rating + K * (scoreA - expectedA));
-  playerB.rating = Math.round(playerB.rating + K * ((1 - scoreA) - expectedB));
-}
-
-// Start new tournament
-startTournamentBtn.addEventListener('click', () => {
-  const selectedAge = ageFilterSelect.value;
-  const activePlayers = players.filter(p => p.active && (selectedAge === "" || p.ageGroup === selectedAge));
-
-  if (activePlayers.length < 2) {
-    alert("Need at least 2 players for a tournament!");
-    return;
-  }
-
-  activePlayers.forEach(p => p.points = 0);
-
-  tournament = {
-    players: activePlayers.map(p => p.id),
+  tournaments[div] = {
+    round: 1,
+    players: divisionPlayers,
     rounds: [],
-    currentRound: 1
+    archive: []
   };
 
-  renderActivePlayers();
-  generatePairings();
-  renderStandings();
-});
+  generatePairings(div);
+  save();
+  renderDivision(div);
+};
 
-// Render active players
-function renderActivePlayers() {
-  activePlayersList.innerHTML = '';
-  const activePlayers = tournament.players.map(id => players.find(p => p.id === id));
-  activePlayers.forEach(p => {
-    const li = document.createElement('li');
-    li.textContent = `${p.name} (${p.rating} Elo) - ${p.points} pts`;
-    activePlayersList.appendChild(li);
-  });
-}
+/* ======================
+   PAIRING ENGINE (NO REMATCH)
+====================== */
 
-// Generate pairings
-function generatePairings() {
-  pairingsList.innerHTML = '';
-  if (!tournament) return;
+function generatePairings(div) {
+  const t = tournaments[div];
+  const sorted = [...t.players].sort((a, b) => b.points - a.points);
 
-  const tournamentPlayers = tournament.players
-    .map(id => players.find(p => p.id === id))
-    .sort((a,b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      return b.rating - a.rating;
-    });
+  const pairings = [];
+  const used = new Set();
 
-  const roundPairings = [];
-  for (let i = 0; i < tournamentPlayers.length; i += 2) {
-    const white = tournamentPlayers[i];
-    const black = tournamentPlayers[i + 1];
-    if (!black) {
-      roundPairings.push({ white: white.id, black: null, result: 1 });
-      continue;
+  for (let i = 0; i < sorted.length; i++) {
+    if (used.has(sorted[i].id)) continue;
+
+    let opponentFound = false;
+
+    for (let j = i + 1; j < sorted.length; j++) {
+      if (used.has(sorted[j].id)) continue;
+
+      if (!sorted[i].opponents.includes(sorted[j].id)) {
+        pairings.push({
+          white: sorted[i],
+          black: sorted[j],
+          result: null
+        });
+
+        used.add(sorted[i].id);
+        used.add(sorted[j].id);
+        opponentFound = true;
+        break;
+      }
     }
-    roundPairings.push({ white: white.id, black: black.id, result: null });
+
+    if (!opponentFound && !used.has(sorted[i].id)) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (!used.has(sorted[j].id)) {
+          pairings.push({
+            white: sorted[i],
+            black: sorted[j],
+            result: null
+          });
+
+          used.add(sorted[i].id);
+          used.add(sorted[j].id);
+          break;
+        }
+      }
+    }
   }
 
-  tournament.rounds.push({ roundNumber: tournament.currentRound, pairings: roundPairings });
-  renderPairings(roundPairings);
+  t.rounds.push(pairings);
 }
 
-// Render pairings
-function renderPairings(roundPairings) {
-  pairingsList.innerHTML = '';
-  const roundNumber = tournament.currentRound;
-  const roundHeader = document.createElement('h4');
-  roundHeader.textContent = `Round ${roundNumber} Pairings`;
-  pairingsList.appendChild(roundHeader);
+/* ======================
+   RESULT ENTRY
+====================== */
 
-  roundPairings.forEach((p) => {
-    const li = document.createElement('li');
-    const white = players.find(pl => pl.id === p.white);
-    const black = p.black ? players.find(pl => pl.id === p.black) : null;
-    li.setAttribute('data-points', white.points);
+function submitResult(div, boardIndex, result) {
+  const t = tournaments[div];
+  const round = t.rounds[t.rounds.length - 1];
+  const game = round[boardIndex];
 
-    if (!black) {
-      li.textContent = `${white.name} has a BYE (1 pt) - Current: ${white.points} pts`;
-      pairingsList.appendChild(li);
-      return;
-    }
+  if (game.result !== null) return;
 
-    li.textContent = `${white.name} (White, ${white.points} pts) vs ${black.name} (Black, ${black.points} pts)`;
+  game.result = result;
 
-    const select = document.createElement('select');
-    select.innerHTML = `
-      <option value="">--Result--</option>
-      <option value="1">White wins</option>
-      <option value="0.5">Draw</option>
-      <option value="0">Black wins</option>
-    `;
-    select.addEventListener('change', () => {
-      const score = parseFloat(select.value);
-      p.result = score;
-      updatePointsAndElo(p);
-      renderStandings();
-      renderPairings(roundPairings); // refresh to show updated points
-    });
+  const white = game.white;
+  const black = game.black;
 
-    li.appendChild(select);
-    pairingsList.appendChild(li);
-  });
+  if (result === 1) white.points += 1;
+  else if (result === 0) black.points += 1;
+  else {
+    white.points += 0.5;
+    black.points += 0.5;
+  }
+
+  updateElo(white, black, result);
+
+  white.opponents.push(black.id);
+  black.opponents.push(white.id);
+
+  save();
+  renderDivision(div);
 }
 
-// Update points and Elo
-function updatePointsAndElo(pairing) {
-  const white = players.find(pl => pl.id === pairing.white);
-  const black = players.find(pl => pl.id === pairing.black);
+function formatResult(result) {
+  if (result === 1) return "1-0";
+  if (result === 0) return "0-1";
+  return "½-½";
+}
 
-  if (!black) {
-    white.points += 1;
-    renderActivePlayers();
+/* ======================
+   ELO SYSTEM
+====================== */
+
+function updateElo(p1, p2, result) {
+  const expected1 = 1 / (1 + 10 ** ((p2.rating - p1.rating) / 400));
+  const expected2 = 1 - expected1;
+
+  p1.rating = Math.round(p1.rating + K * (result - expected1));
+  p2.rating = Math.round(p2.rating + K * ((1 - result) - expected2));
+}
+
+/* ======================
+   ROUND LOCK
+====================== */
+
+function isRoundComplete(div) {
+  const t = tournaments[div];
+  if (!t || t.rounds.length === 0) return false;
+
+  const currentRound = t.rounds[t.rounds.length - 1];
+  return currentRound.every(game => game.result !== null);
+}
+
+document.getElementById("next-round").onclick = () => {
+  const div = document.getElementById("division-select").value;
+  const t = tournaments[div];
+
+  if (!t) return;
+
+  if (!isRoundComplete(div)) {
+    alert("All results must be entered first.");
     return;
   }
 
-  if (pairing.result === null) return;
+  t.round++;
+  generatePairings(div);
+  save();
+  renderDivision(div);
+};
 
-  white.points += pairing.result;
-  black.points += (1 - pairing.result);
+/* ======================
+   ARCHIVE
+====================== */
 
-  updateElo(white, black, pairing.result);
-  renderActivePlayers();
-  renderPlayers();
-}
+document.getElementById("archive-division").onclick = () => {
+  const div = document.getElementById("division-select").value;
+  const t = tournaments[div];
+  if (!t) return;
 
-// Render standings table
-function renderStandings() {
-  standingsTable.innerHTML = '';
-  const tablePlayers = tournament.players.map(id => players.find(p => p.id === id))
-    .sort((a,b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      return b.rating - a.rating;
-    });
-
-  tablePlayers.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${p.name}</td><td>${p.ageGroup}</td><td>${p.points}</td><td>${p.rating}</td>`;
-    standingsTable.appendChild(tr);
+  t.archive.push({
+    date: new Date(),
+    standings: [...t.players]
   });
-}
 
-// Next round
-nextRoundBtn.addEventListener('click', () => {
-  if (!tournament) return;
-  const lastRound = tournament.rounds[tournament.currentRound - 1];
-  if (lastRound.pairings.some(p => p.result === null)) {
-    alert("Enter all results first!");
+  tournaments[div] = null;
+  save();
+  renderDivision(div);
+};
+
+/* ======================
+   EXPORT CSV
+====================== */
+
+document.getElementById("export-division").onclick = () => {
+  const div = document.getElementById("division-select").value;
+  const t = tournaments[div];
+  if (!t) return;
+
+  let csv = "Name,Points,Rating\n";
+  t.players.forEach(p => {
+    csv += `${p.name},${p.points},${Math.round(p.rating)}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${div}_standings.csv`;
+  a.click();
+};
+
+/* ======================
+   RENDER
+====================== */
+
+function renderDivision(div) {
+  const container = document.getElementById("division-output");
+  const t = tournaments[div];
+
+  if (!t) {
+    container.innerHTML = "<p>No active tournament.</p>";
     return;
   }
-  tournament.currentRound++;
-  generatePairings();
-  renderStandings();
-});
 
-// Print
-printBtn.addEventListener('click', () => window.print());
+  let html = `<h3>${div.toUpperCase()} - Round ${t.round}</h3>`;
 
-// Initial render
-renderPlayers();
-renderStandings();
+  const currentRound = t.rounds[t.rounds.length - 1];
+
+  html += "<table><tr><th>Board</th><th>White</th><th>Black</th><th>Result</th></tr>";
+
+  currentRound.forEach((game, i) => {
+    html += `<tr>
+      <td>${i + 1}</td>
+      <td>${game.white.name}</td>
+      <td>${game.black ? game.black.name : "BYE"}</td>
+      <td>
+        ${
+          game.result === null
+            ? `
+              <button onclick="submitResult('${div}', ${i}, 1)">1-0</button>
+              <button onclick="submitResult('${div}', ${i}, 0.5)">½-½</button>
+              <button onclick="submitResult('${div}', ${i}, 0)">0-1</button>
+            `
+            : formatResult(game.result)
+        }
+      </td>
+    </tr>`;
+  });
+
+  html += "</table>";
+
+  const pending = currentRound.filter(g => g.result === null).length;
+  if (pending > 0) {
+    html += `<p style="color:red;">${pending} game(s) pending</p>`;
+  }
+
+  html += "<h4>Standings</h4>";
+  html += "<table><tr><th>Name</th><th>Pts</th><th>Rating</th></tr>";
+
+  t.players
+    .sort((a, b) => b.points - a.points)
+    .forEach(p => {
+      html += `<tr>
+        <td>${p.name}</td>
+        <td>${p.points}</td>
+        <td>${Math.round(p.rating)}</td>
+      </tr>`;
+    });
+
+  html += "</table>";
+
+  container.innerHTML = html;
+
+  const nextBtn = document.getElementById("next-round");
+  nextBtn.disabled = !isRoundComplete(div);
+}
