@@ -1,3 +1,7 @@
+/* =========================
+   DATA STORAGE
+========================= */
+
 let players = JSON.parse(localStorage.getItem("players")) || [];
 let tournaments = JSON.parse(localStorage.getItem("tournaments")) || {
   u9: null,
@@ -12,9 +16,9 @@ function save() {
   localStorage.setItem("tournaments", JSON.stringify(tournaments));
 }
 
-/* ======================
+/* =========================
    PLAYER MANAGEMENT
-====================== */
+========================= */
 
 document.getElementById("add-player").onclick = () => {
   const name = document.getElementById("player-name").value.trim();
@@ -26,12 +30,13 @@ document.getElementById("add-player").onclick = () => {
     id: Date.now(),
     name,
     age,
-    rating: 1200
+    rating: 1200,
+    active: false
   });
 
   document.getElementById("player-name").value = "";
   save();
-  alert("Player added.");
+  renderPlayers();
 };
 
 document.getElementById("clear-players").onclick = () => {
@@ -43,15 +48,60 @@ document.getElementById("clear-players").onclick = () => {
   }
 };
 
-/* ======================
+function toggleActive(id) {
+  const player = players.find(p => p.id === id);
+  if (!player) return;
+
+  player.active = !player.active;
+  save();
+  renderPlayers();
+}
+
+function removePlayer(id) {
+  if (!confirm("Remove this player?")) return;
+
+  players = players.filter(p => p.id !== id);
+  save();
+  renderPlayers();
+}
+
+function renderPlayers() {
+  const container = document.getElementById("player-list");
+
+  if (players.length === 0) {
+    container.innerHTML = "<p>No players added yet.</p>";
+    return;
+  }
+
+  let html = "<table><tr><th>Active</th><th>Name</th><th>Age</th><th>Rating</th><th>Remove</th></tr>";
+
+  players.forEach(p => {
+    html += `<tr>
+      <td>
+        <input type="checkbox"
+          ${p.active ? "checked" : ""}
+          onchange="toggleActive(${p.id})">
+      </td>
+      <td>${p.name}</td>
+      <td>${p.age.toUpperCase()}</td>
+      <td>${p.rating}</td>
+      <td><button onclick="removePlayer(${p.id})">X</button></td>
+    </tr>`;
+  });
+
+  html += "</table>";
+  container.innerHTML = html;
+}
+
+/* =========================
    START DIVISION
-====================== */
+========================= */
 
 document.getElementById("start-division").onclick = () => {
   const div = document.getElementById("division-select").value;
 
   const divisionPlayers = players
-    .filter(p => p.age === div)
+    .filter(p => p.age === div && p.active)
     .map(p => ({
       ...p,
       points: 0,
@@ -59,7 +109,7 @@ document.getElementById("start-division").onclick = () => {
     }));
 
   if (divisionPlayers.length < 2) {
-    alert("Need at least 2 players");
+    alert("Need at least 2 active players.");
     return;
   }
 
@@ -75,9 +125,9 @@ document.getElementById("start-division").onclick = () => {
   renderDivision(div);
 };
 
-/* ======================
+/* =========================
    PAIRING ENGINE (NO REMATCH)
-====================== */
+========================= */
 
 function generatePairings(div) {
   const t = tournaments[div];
@@ -128,9 +178,9 @@ function generatePairings(div) {
   t.rounds.push(pairings);
 }
 
-/* ======================
+/* =========================
    RESULT ENTRY
-====================== */
+========================= */
 
 function submitResult(div, boardIndex, result) {
   const t = tournaments[div];
@@ -166,9 +216,9 @@ function formatResult(result) {
   return "½-½";
 }
 
-/* ======================
+/* =========================
    ELO SYSTEM
-====================== */
+========================= */
 
 function updateElo(p1, p2, result) {
   const expected1 = 1 / (1 + 10 ** ((p2.rating - p1.rating) / 400));
@@ -178,9 +228,9 @@ function updateElo(p1, p2, result) {
   p2.rating = Math.round(p2.rating + K * ((1 - result) - expected2));
 }
 
-/* ======================
+/* =========================
    ROUND LOCK
-====================== */
+========================= */
 
 function isRoundComplete(div) {
   const t = tournaments[div];
@@ -193,7 +243,6 @@ function isRoundComplete(div) {
 document.getElementById("next-round").onclick = () => {
   const div = document.getElementById("division-select").value;
   const t = tournaments[div];
-
   if (!t) return;
 
   if (!isRoundComplete(div)) {
@@ -207,28 +256,22 @@ document.getElementById("next-round").onclick = () => {
   renderDivision(div);
 };
 
-/* ======================
+/* =========================
    ARCHIVE
-====================== */
+========================= */
 
 document.getElementById("archive-division").onclick = () => {
   const div = document.getElementById("division-select").value;
-  const t = tournaments[div];
-  if (!t) return;
-
-  t.archive.push({
-    date: new Date(),
-    standings: [...t.players]
-  });
+  if (!tournaments[div]) return;
 
   tournaments[div] = null;
   save();
   renderDivision(div);
 };
 
-/* ======================
+/* =========================
    EXPORT CSV
-====================== */
+========================= */
 
 document.getElementById("export-division").onclick = () => {
   const div = document.getElementById("division-select").value;
@@ -247,9 +290,9 @@ document.getElementById("export-division").onclick = () => {
   a.click();
 };
 
-/* ======================
-   RENDER
-====================== */
+/* =========================
+   RENDER DIVISION
+========================= */
 
 function renderDivision(div) {
   const container = document.getElementById("division-output");
@@ -261,7 +304,6 @@ function renderDivision(div) {
   }
 
   let html = `<h3>${div.toUpperCase()} - Round ${t.round}</h3>`;
-
   const currentRound = t.rounds[t.rounds.length - 1];
 
   html += "<table><tr><th>Board</th><th>White</th><th>Black</th><th>Result</th></tr>";
@@ -270,7 +312,7 @@ function renderDivision(div) {
     html += `<tr>
       <td>${i + 1}</td>
       <td>${game.white.name}</td>
-      <td>${game.black ? game.black.name : "BYE"}</td>
+      <td>${game.black.name}</td>
       <td>
         ${
           game.result === null
@@ -309,6 +351,11 @@ function renderDivision(div) {
 
   container.innerHTML = html;
 
-  const nextBtn = document.getElementById("next-round");
-  nextBtn.disabled = !isRoundComplete(div);
+  document.getElementById("next-round").disabled = !isRoundComplete(div);
 }
+
+/* =========================
+   INIT
+========================= */
+
+renderPlayers();
