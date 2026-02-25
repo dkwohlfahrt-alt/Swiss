@@ -337,20 +337,20 @@ function renderDivision(div) {
     html += `<p style="color:red;">${pending} game(s) pending</p>`;
   }
 
-  html += "<h4>Standings</h4>";
-  html += "<table><tr><th>Name</th><th>Pts</th><th>Rating</th></tr>";
+ html += "<h4>Standings</h4>";
+html += "<table><tr><th>Name</th><th>Pts</th><th>Rating</th></tr>";
 
-  t.players
-    .sort((a, b) => b.points - a.points)
-    .forEach(p => {
-      html += `<tr>
-        <td>${p.name}</td>
-        <td>${p.points}</td>
-        <td>${Math.round(p.rating)}</td>
-      </tr>`;
-    });
-
-  html += "</table>";
+t.players
+  .sort((a, b) => b.points - a.points)
+  .forEach(p => {
+    html += `<tr>
+      <td style="color: ${p.age === 'u9' ? 'blue' : p.age === 'u11' ? 'green' : 'orange'}">
+        ${p.name} (${p.age.toUpperCase()})
+      </td>
+      <td>${p.points}</td>
+      <td>${Math.round(p.rating)}</td>
+    </tr>`;
+  });
 
   container.innerHTML = html;
 
@@ -362,4 +362,5 @@ function renderDivision(div) {
 ========================= */
 
 renderPlayers();
+
 
