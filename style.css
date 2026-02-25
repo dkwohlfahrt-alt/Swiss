@@ -1,4 +1,66 @@
-/* Print styles */
+/* ----- General Layout ----- */
+body {
+  font-family: Arial, sans-serif;
+  margin: 10px;
+  padding: 0;
+  background: #f8f8f8;
+}
+
+h1, h2, h3, h4 {
+  text-align: center;
+}
+
+section {
+  background: #ffffff;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+input, select, button {
+  margin: 5px 2px;
+  padding: 5px 8px;
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+}
+
+ul, ol {
+  list-style-position: inside;
+  padding-left: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+
+th, td {
+  border: 1px solid #aaa;
+  padding: 5px 8px;
+  text-align: left;
+}
+
+#logo-line img {
+  height: 60px;
+}
+
+/* ----- Mobile Responsiveness ----- */
+@media (max-width: 600px) {
+  input, select, button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  table, th, td {
+    font-size: 12px;
+  }
+}
+
+/* ----- Print Styles ----- */
 @media print {
   body * {
     visibility: hidden;
@@ -10,35 +72,29 @@
     left: 0;
     top: 0;
     width: 100%;
-  }
-
-  #pairings {
-    margin-bottom: 20px;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
     font-size: 12pt;
   }
 
-  table, th, td {
-    border: 1px solid black;
-  }
-
-  th, td {
-    padding: 4px 8px;
+  #pairings h4 {
     text-align: left;
   }
 
-  #print-pairings {
+  table {
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid black;
+    padding: 4px 6px;
+  }
+
+  #print-pairings, button, input, select {
     display: none;
   }
 
-  #pairings li::after {
+  li::after {
     content: " [" attr(data-points) " pts]";
   }
-
 }
-
-
