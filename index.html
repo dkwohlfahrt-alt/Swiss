@@ -1,16 +1,27 @@
-add<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Swiss</title>
+  <title>Daniel Swiss</title>
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon.png">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="icon.PNG">
 </head>
 <body>
-  <h1>Chess Tournament</h1>
 
+  <!-- Logo Line -->
+  <div id="logo-line" style="text-align:center; margin-bottom:10px;">
+    <img src="icon.png" alt="Daniel Swiss Logo" style="height:60px;">
+  </div>
+
+  <h1>Daniel Swiss - Chess Tournament</h1>
+
+  <!-- Players Section -->
   <section id="players-section">
     <h2>Players</h2>
     <input type="text" id="new-player-name" placeholder="Player Name">
@@ -24,9 +35,11 @@ add<!DOCTYPE html>
     <ul id="players-list"></ul>
   </section>
 
+  <!-- Tournament Section -->
   <section id="tournament-section">
     <h2>Tournament</h2>
     <button id="start-tournament">Start New Tournament</button>
+
     <h3>Age Group Filter</h3>
     <div id="age-filter-container"></div>
 
@@ -48,13 +61,13 @@ add<!DOCTYPE html>
       </thead>
       <tbody></tbody>
     </table>
+
+    <button id="next-round">Next Round</button>
   </section>
 
   <button id="print-pairings">Print Pairings</button>
 
+  <!-- JS -->
   <script src="app.js"></script>
 </body>
 </html>
-
-
-
