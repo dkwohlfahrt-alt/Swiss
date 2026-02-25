@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daniel Swiss</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Daniel Swiss - Chess Tournament</h1>
+
+  <section id="players-section">
+    <h2>Players</h2>
+    <input type="text" id="new-player-name" placeholder="Player Name">
+    <input type="number" id="new-player-rating" placeholder="Rating" value="1200">
+    <select id="new-player-age">
+      <option value="U9">U9</option>
+      <option value="U11">U11</option>
+      <option value="U13">U13</option>
+    </select>
+    <button id="add-player">Add Player</button>
+    <ul id="players-list"></ul>
+  </section>
+
+  <section id="tournament-section">
+    <h2>Tournament</h2>
+    <button id="start-tournament">Start New Tournament</button>
+    <h3>Age Group Filter</h3>
+    <div id="age-filter-container"></div>
+
+    <h3>Active Players</h3>
+    <ul id="active-players"></ul>
+
+    <h3>Round Pairings</h3>
+    <ol id="pairings"></ol>
+
+    <h3>Standings</h3>
+    <table id="standings">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Points</th>
+          <th>Elo</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <button id="print-pairings">Print Pairings</button>
+
+  <script src="app.js"></script>
+</body>
+</html>
