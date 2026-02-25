@@ -17,12 +17,10 @@
 <section>
   <h2>Add Player</h2>
   <input id="player-name" placeholder="Name">
-  <select id="division-select" multiple>
-  <option value="u9">U9</option>
-  <option value="u11">U11</option>
-  <option value="u13">U13</option>
-</select>
-<p><small>Hold Ctrl/Cmd to select multiple age groups</small></p>
+  <select id="age-group">
+    <option value="u9">U9</option>
+    <option value="u11">U11</option>
+    <option value="u13">U13</option>
   </select>
   <button id="add-player">Add Player</button>
   <button id="clear-players">Clear All</button>
@@ -38,11 +36,13 @@
 <section>
   <h2>Division Control</h2>
 
-  <select id="division-select">
+  <label>Select Age Groups:</label>
+  <select id="division-select" multiple>
     <option value="u9">U9</option>
     <option value="u11">U11</option>
     <option value="u13">U13</option>
   </select>
+  <p><small>Hold Ctrl/Cmd to select multiple age groups</small></p>
 
   <button id="start-division">Start Division</button>
   <button id="next-round">Next Round</button>
@@ -56,4 +56,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-
