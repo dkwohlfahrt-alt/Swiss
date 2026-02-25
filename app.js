@@ -125,18 +125,26 @@ function generatePairings() {
 // Render pairings with results
 function renderPairings(roundPairings) {
   pairingsList.innerHTML = '';
-  roundPairings.forEach((p) => {
+
+  const roundNumber = tournament.currentRound;
+  const roundHeader = document.createElement('h4');
+  roundHeader.textContent = `Round ${roundNumber} Pairings`;
+  pairingsList.appendChild(roundHeader);
+
+  roundPairings.forEach((p, idx) => {
     const li = document.createElement('li');
+    li.setAttribute('data-points', white.points || 0);
     const white = players.find(pl => pl.id === p.white);
     const black = p.black ? players.find(pl => pl.id === p.black) : null;
 
     if (!black) {
-      li.textContent = `${white.name} has a BYE (1 point)`;
+      li.textContent = `${white.name} has a BYE (1 point) - Current: ${white.points || 0} pts`;
       pairingsList.appendChild(li);
       return;
     }
 
-    li.textContent = `${white.name} (White) vs ${black.name} (Black) `;
+    li.textContent = `${white.name} (White, ${white.points || 0} pts) vs ${black.name} (Black, ${black.points || 0} pts)`;
+
     const select = document.createElement('select');
     select.innerHTML = `
       <option value="">--Result--</option>
@@ -149,6 +157,7 @@ function renderPairings(roundPairings) {
       p.result = score;
       updatePointsAndElo(p);
       renderStandings();
+      renderPairings(roundPairings); // re-render to update points
     });
 
     li.appendChild(select);
