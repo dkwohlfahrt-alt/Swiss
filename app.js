@@ -11,8 +11,9 @@ const startTournamentBtn = document.getElementById('start-tournament');
 const ageFilterContainer = document.getElementById('age-filter-container');
 const standingsTable = document.querySelector('#standings tbody');
 const printBtn = document.getElementById('print-pairings');
+const nextRoundBtn = document.getElementById('next-round');
 
-// ---- Age Filter (U9, U11, U13) ----
+// ---- Age Filter ----
 const ageFilterSelect = document.createElement('select');
 ageFilterSelect.innerHTML = `
   <option value="">All Ages</option>
@@ -23,8 +24,6 @@ ageFilterSelect.innerHTML = `
 ageFilterContainer.appendChild(ageFilterSelect);
 
 // ---- Functions ----
-
-// Render all players
 function renderPlayers() {
   playersList.innerHTML = '';
   players.forEach((p) => {
@@ -47,7 +46,7 @@ addPlayerBtn.addEventListener('click', () => {
   }
 
   if (name) {
-    players.push({ id: Date.now(), name, rating, ageGroup, active: true, tournamentsPlayed: 0, points: 0 });
+    players.push({ id: Date.now(), name, rating, ageGroup, active: true, points: 0 });
     renderPlayers();
     document.getElementById('new-player-name').value = '';
   }
@@ -90,12 +89,12 @@ function renderActivePlayers() {
   const activePlayers = tournament.players.map(id => players.find(p => p.id === id));
   activePlayers.forEach(p => {
     const li = document.createElement('li');
-    li.textContent = `${p.name} (${p.rating} Elo) - ${p.points || 0} pts`;
+    li.textContent = `${p.name} (${p.rating} Elo) - ${p.points} pts`;
     activePlayersList.appendChild(li);
   });
 }
 
-// Generate pairings for current round (points → rating)
+// Generate pairings
 function generatePairings() {
   pairingsList.innerHTML = '';
   if (!tournament) return;
@@ -103,7 +102,7 @@ function generatePairings() {
   const tournamentPlayers = tournament.players
     .map(id => players.find(p => p.id === id))
     .sort((a,b) => {
-      if ((b.points || 0) !== (a.points || 0)) return (b.points || 0) - (a.points || 0);
+      if (b.points !== a.points) return b.points - a.points;
       return b.rating - a.rating;
     });
 
@@ -122,28 +121,27 @@ function generatePairings() {
   renderPairings(roundPairings);
 }
 
-// Render pairings with results
+// Render pairings
 function renderPairings(roundPairings) {
   pairingsList.innerHTML = '';
-
   const roundNumber = tournament.currentRound;
   const roundHeader = document.createElement('h4');
   roundHeader.textContent = `Round ${roundNumber} Pairings`;
   pairingsList.appendChild(roundHeader);
 
-  roundPairings.forEach((p, idx) => {
+  roundPairings.forEach((p) => {
     const li = document.createElement('li');
-    li.setAttribute('data-points', white.points || 0);
     const white = players.find(pl => pl.id === p.white);
     const black = p.black ? players.find(pl => pl.id === p.black) : null;
+    li.setAttribute('data-points', white.points);
 
     if (!black) {
-      li.textContent = `${white.name} has a BYE (1 point) - Current: ${white.points || 0} pts`;
+      li.textContent = `${white.name} has a BYE (1 pt) - Current: ${white.points} pts`;
       pairingsList.appendChild(li);
       return;
     }
 
-    li.textContent = `${white.name} (White, ${white.points || 0} pts) vs ${black.name} (Black, ${black.points || 0} pts)`;
+    li.textContent = `${white.name} (White, ${white.points} pts) vs ${black.name} (Black, ${black.points} pts)`;
 
     const select = document.createElement('select');
     select.innerHTML = `
@@ -157,7 +155,7 @@ function renderPairings(roundPairings) {
       p.result = score;
       updatePointsAndElo(p);
       renderStandings();
-      renderPairings(roundPairings); // re-render to update points
+      renderPairings(roundPairings); // refresh to show updated points
     });
 
     li.appendChild(select);
@@ -171,15 +169,15 @@ function updatePointsAndElo(pairing) {
   const black = players.find(pl => pl.id === pairing.black);
 
   if (!black) {
-    white.points = (white.points || 0) + 1;
+    white.points += 1;
     renderActivePlayers();
     return;
   }
 
   if (pairing.result === null) return;
 
-  white.points = (white.points || 0) + pairing.result;
-  black.points = (black.points || 0) + (1 - pairing.result);
+  white.points += pairing.result;
+  black.points += (1 - pairing.result);
 
   updateElo(white, black, pairing.result);
   renderActivePlayers();
@@ -191,39 +189,32 @@ function renderStandings() {
   standingsTable.innerHTML = '';
   const tablePlayers = tournament.players.map(id => players.find(p => p.id === id))
     .sort((a,b) => {
-      if ((b.points || 0) !== (a.points || 0)) return (b.points || 0) - (a.points || 0);
+      if (b.points !== a.points) return b.points - a.points;
       return b.rating - a.rating;
     });
 
   tablePlayers.forEach(p => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${p.name}</td><td>${p.ageGroup}</td><td>${p.points || 0}</td><td>${p.rating}</td>`;
+    tr.innerHTML = `<td>${p.name}</td><td>${p.ageGroup}</td><td>${p.points}</td><td>${p.rating}</td>`;
     standingsTable.appendChild(tr);
   });
 }
 
-// Next round button
-const nextRoundBtn = document.createElement('button');
-nextRoundBtn.textContent = "Next Round";
+// Next round
 nextRoundBtn.addEventListener('click', () => {
   if (!tournament) return;
-
   const lastRound = tournament.rounds[tournament.currentRound - 1];
   if (lastRound.pairings.some(p => p.result === null)) {
-    alert("Please enter all results for this round first!");
+    alert("Enter all results first!");
     return;
   }
-
   tournament.currentRound++;
   generatePairings();
   renderStandings();
 });
-document.getElementById('tournament-section').appendChild(nextRoundBtn);
 
-// Print pairings
-printBtn.addEventListener('click', () => {
-  window.print();
-});
+// Print
+printBtn.addEventListener('click', () => window.print());
 
 // Initial render
 renderPlayers();
