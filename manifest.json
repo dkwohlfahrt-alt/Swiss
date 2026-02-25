@@ -1,10 +1,10 @@
 {
   "name": "Daniel Swiss",
   "short_name": "Swiss",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2e3a59",
+  "theme_color": "#1a73e8",
   "icons": [
     {
       "src": "icon.png",
@@ -17,5 +17,4 @@
       "type": "image/png"
     }
   ]
-
 }
