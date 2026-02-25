@@ -18,7 +18,9 @@ document.getElementById("add-player").onclick = () => {
   const age = document.getElementById("age-group").value;
   if (!name) return;
 
-  players.push({ id: Date.now(), name, age, rating: 1200, active: false });
+  const baseRating = age === 'u9' ? 600 : age === 'u11' ? 700 : 900;
+
+players.push({ id: Date.now(), name, age, rating: baseRating, active: false });
   document.getElementById("player-name").value = "";
   save();
   renderPlayers();
@@ -289,3 +291,4 @@ function colorForAge(age) {
 ========================= */
 renderPlayers();
 renderAllDivisions();
+
