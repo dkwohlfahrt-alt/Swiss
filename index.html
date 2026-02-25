@@ -1,73 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daniel Swiss</title>
+  <title>Swiss Tournament Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="icon.png">
-
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <!-- Logo Line -->
-  <div id="logo-line" style="text-align:center; margin-bottom:10px;">
-    <img src="icon.png" alt="Daniel Swiss Logo" style="height:60px;">
-  </div>
+<h1>♟ Swiss Tournament Manager</h1>
 
-  <h1>Daniel Swiss - Chess Tournament</h1>
+<section>
+  <h2>Add Player</h2>
+  <input id="player-name" placeholder="Name">
+  <select id="age-group">
+    <option value="u9">U9</option>
+    <option value="u11">U11</option>
+    <option value="u13">U13</option>
+  </select>
+  <button id="add-player">Add</button>
+  <button id="clear-players">Clear All</button>
+</section>
 
-  <!-- Players Section -->
-  <section id="players-section">
-    <h2>Players</h2>
-    <input type="text" id="new-player-name" placeholder="Player Name">
-    <input type="number" id="new-player-rating" placeholder="Rating" value="1200">
-    <select id="new-player-age">
-      <option value="U9">U9</option>
-      <option value="U11">U11</option>
-      <option value="U13">U13</option>
-    </select>
-    <button id="add-player">Add Player</button>
-    <ul id="players-list"></ul>
-  </section>
+<section>
+  <h2>Division Control</h2>
+  <select id="division-select">
+    <option value="u9">U9</option>
+    <option value="u11">U11</option>
+    <option value="u13">U13</option>
+  </select>
 
-  <!-- Tournament Section -->
-  <section id="tournament-section">
-    <h2>Tournament</h2>
-    <button id="start-tournament">Start New Tournament</button>
+  <button id="start-division">Start Division</button>
+  <button id="next-round">Next Round</button>
+  <button id="archive-division">Archive</button>
+  <button id="export-division">Export CSV</button>
+</section>
 
-    <h3>Age Group Filter</h3>
-    <div id="age-filter-container"></div>
+<section id="division-output"></section>
 
-    <h3>Active Players</h3>
-    <ul id="active-players"></ul>
-
-    <h3>Round Pairings</h3>
-    <ol id="pairings"></ol>
-
-    <h3>Standings</h3>
-    <table id="standings">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Age</th>
-          <th>Points</th>
-          <th>Elo</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <button id="next-round">Next Round</button>
-  </section>
-
-  <button id="print-pairings">Print Pairings</button>
-
-  <!-- JS -->
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
