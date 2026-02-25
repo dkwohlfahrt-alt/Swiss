@@ -13,6 +13,7 @@
 
 <h1>♟ Swiss Tournament Manager</h1>
 
+<!-- ADD PLAYER -->
 <section>
   <h2>Add Player</h2>
   <input id="player-name" placeholder="Name">
@@ -21,12 +22,20 @@
     <option value="u11">U11</option>
     <option value="u13">U13</option>
   </select>
-  <button id="add-player">Add</button>
+  <button id="add-player">Add Player</button>
   <button id="clear-players">Clear All</button>
 </section>
 
+<!-- PLAYER LIST -->
+<section>
+  <h2>All Players</h2>
+  <div id="player-list"></div>
+</section>
+
+<!-- DIVISION CONTROL -->
 <section>
   <h2>Division Control</h2>
+
   <select id="division-select">
     <option value="u9">U9</option>
     <option value="u11">U11</option>
@@ -39,6 +48,7 @@
   <button id="export-division">Export CSV</button>
 </section>
 
+<!-- OUTPUT -->
 <section id="division-output"></section>
 
 <script src="app.js"></script>
