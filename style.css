@@ -3,14 +3,7 @@
   body * {
     visibility: hidden;
   }
-#logo-line {
-  text-align: center;
-  margin-bottom: 10px;
-}
 
-#logo-line img {
-  height: 60px;
-}
   #pairings, #standings {
     visibility: visible;
     position: absolute;
@@ -47,4 +40,5 @@
   }
 
 }
+
 
