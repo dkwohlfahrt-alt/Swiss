@@ -1,4 +1,42 @@
-body { font-family: sans-serif; padding: 20px; }
-h1, h2, h3 { margin-bottom: 10px; }
-input, select, button { margin: 5px; }
-ul, ol { margin-left: 20px; }
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #pairings, #standings {
+    visibility: visible;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  #pairings {
+    margin-bottom: 20px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12pt;
+  }
+
+  table, th, td {
+    border: 1px solid black;
+  }
+
+  th, td {
+    padding: 4px 8px;
+    text-align: left;
+  }
+
+  #print-pairings {
+    display: none;
+  }
+
+  #pairings li::after {
+    content: " [" attr(data-points) " pts]";
+  }
+
+}
