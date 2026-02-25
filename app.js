@@ -16,13 +16,13 @@ function save() {
 document.getElementById("add-player").onclick = () => {
   const name = document.getElementById("player-name").value.trim();
   const age = document.getElementById("age-group").value;
-
   if (!name) return;
 
   players.push({ id: Date.now(), name, age, rating: 1200, active: false });
   document.getElementById("player-name").value = "";
   save();
   renderPlayers();
+  renderAllDivisions();
 };
 
 document.getElementById("clear-players").onclick = () => {
@@ -39,6 +39,7 @@ function toggleActive(id) {
   player.active = !player.active;
   save();
   renderPlayers();
+  renderAllDivisions();
 }
 
 function removePlayer(id) {
@@ -46,6 +47,7 @@ function removePlayer(id) {
   players = players.filter(p => p.id !== id);
   save();
   renderPlayers();
+  renderAllDivisions();
 }
 
 function renderPlayers() {
@@ -88,7 +90,7 @@ document.getElementById("start-division").onclick = () => {
 
   generatePairings(divName);
   save();
-  renderDivision(divName);
+  renderAllDivisions();
 };
 
 /* =========================
@@ -152,7 +154,7 @@ function submitResult(div, boardIndex, result) {
   black.opponents.push(white.id);
 
   save();
-  renderDivision(div);
+  renderAllDivisions();
 }
 
 function formatResult(result) {
@@ -181,57 +183,53 @@ function isRoundComplete(div) {
 }
 
 document.getElementById("next-round").onclick = () => {
-  const div = Array.from(document.getElementById("division-select").selectedOptions)
-                     .map(opt => opt.value).join("+");
-  const t = tournaments[div];
-  if (!t) return;
-  if (!isRoundComplete(div)) return alert("All results must be entered first.");
-  t.round++;
-  generatePairings(div);
+  Object.keys(tournaments).forEach(div => {
+    const t = tournaments[div];
+    if (!t) return;
+    if (!isRoundComplete(div)) return;
+    t.round++;
+    generatePairings(div);
+  });
   save();
-  renderDivision(div);
+  renderAllDivisions();
 };
 
 /* =========================
    ARCHIVE
 ========================= */
 document.getElementById("archive-division").onclick = () => {
-  const div = Array.from(document.getElementById("division-select").selectedOptions)
-                     .map(opt => opt.value).join("+");
-  if (!tournaments[div]) return;
-  tournaments[div] = null;
+  Object.keys(tournaments).forEach(div => {
+    tournaments[div] = null;
+  });
   save();
-  renderDivision(div);
+  renderAllDivisions();
 };
 
 /* =========================
    EXPORT CSV
 ========================= */
 document.getElementById("export-division").onclick = () => {
-  const div = Array.from(document.getElementById("division-select").selectedOptions)
-                     .map(opt => opt.value).join("+");
-  const t = tournaments[div];
-  if (!t) return;
-
-  let csv = "Name,Age,Points,Rating\n";
-  t.players.forEach(p => {
-    csv += `${p.name},${p.age.toUpperCase()},${p.points},${Math.round(p.rating)}\n`;
+  Object.keys(tournaments).forEach(div => {
+    const t = tournaments[div];
+    if (!t) return;
+    let csv = "Name,Age,Points,Rating\n";
+    t.players.forEach(p => {
+      csv += `${p.name},${p.age.toUpperCase()},${p.points},${Math.round(p.rating)}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${div}_standings.csv`;
+    a.click();
   });
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${div}_standings.csv`;
-  a.click();
 };
 
 /* =========================
    RENDER DIVISION
 ========================= */
-function renderDivision(div) {
-  const container = document.getElementById("division-output");
+function renderDivision(div, container) {
   const t = tournaments[div];
-  if (!t) { container.innerHTML = "<p>No active tournament.</p>"; return; }
+  if (!t) return;
 
   let html = `<h3>${div.toUpperCase()} - Round ${t.round}</h3>`;
   const currentRound = t.rounds[t.rounds.length - 1];
@@ -266,8 +264,20 @@ function renderDivision(div) {
   });
   html += "</table>";
 
-  container.innerHTML = html;
-  document.getElementById("next-round").disabled = !isRoundComplete(div);
+  container.innerHTML += html;
+}
+
+function renderAllDivisions() {
+  const container = document.getElementById("division-output");
+  container.innerHTML = "";
+
+  const activeDivs = Object.keys(tournaments).filter(d => tournaments[d] !== null);
+  if (activeDivs.length === 0) {
+    container.innerHTML = "<p>No active tournaments.</p>";
+    return;
+  }
+
+  activeDivs.forEach(div => renderDivision(div, container));
 }
 
 function colorForAge(age) {
@@ -278,3 +288,4 @@ function colorForAge(age) {
    INIT
 ========================= */
 renderPlayers();
+renderAllDivisions();
