@@ -100,13 +100,16 @@ function renderPlayers() {
 document.getElementById("start-division").onclick = () => {
   const div = document.getElementById("division-select").value;
 
-  const divisionPlayers = players
-    .filter(p => p.age === div && p.active)
-    .map(p => ({
-      ...p,
-      points: 0,
-      opponents: []
-    }));
+ const selectedAges = Array.from(document.getElementById("division-select").selectedOptions)
+                          .map(opt => opt.value);
+
+const divisionPlayers = players
+  .filter(p => selectedAges.includes(p.age) && p.active)
+  .map(p => ({
+    ...p,
+    points: 0,
+    opponents: []
+  }));
 
   if (divisionPlayers.length < 2) {
     alert("Need at least 2 active players.");
@@ -359,3 +362,4 @@ function renderDivision(div) {
 ========================= */
 
 renderPlayers();
+
