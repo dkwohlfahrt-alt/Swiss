@@ -17,10 +17,12 @@
 <section>
   <h2>Add Player</h2>
   <input id="player-name" placeholder="Name">
-  <select id="age-group">
-    <option value="u9">U9</option>
-    <option value="u11">U11</option>
-    <option value="u13">U13</option>
+  <select id="division-select" multiple>
+  <option value="u9">U9</option>
+  <option value="u11">U11</option>
+  <option value="u13">U13</option>
+</select>
+<p><small>Hold Ctrl/Cmd to select multiple age groups</small></p>
   </select>
   <button id="add-player">Add Player</button>
   <button id="clear-players">Clear All</button>
@@ -54,3 +56,4 @@
 <script src="app.js"></script>
 </body>
 </html>
+
